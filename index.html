@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Peminjaman Alat Teknik Sepeda Motor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      background-color: #d32f2f;
+      padding: 10px 0;
+    }
+    form {
+      margin: 20px;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="file"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #d32f2f;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    button:hover {
+      background-color: #b71c1c;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    .thumbnail {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+    .dark-mode {
+      background-color: #333;
+      color: white;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<h1>Form Peminjaman Alat Teknik Sepeda Motor</h1>
+
+<form id="formPeminjaman">
+  <label for="status">Status:</label>
+  <select id="status">
+    <option value="Guru">Guru</option>
+    <option value="Siswa">Siswa</option>
+  </select>
+
+  <label for="idNumber">NISN / NIP:</label>
+  <input type="text" id="idNumber" required>
+
+  <label for="nama">Nama:</label>
+  <input type="text" id="nama" required>
+
+  <label for="kelas">Kelas:</label>
+  <input type="text" id="kelas" required>
+
+  <label for="alat">Alat yang Dipinjam:</label>
+  <input type="text" id="alat" required>
+
+  <label for="tanggal">Tanggal Peminjaman:</label>
+  <input type="date" id="tanggal" required>
+
+  <label for="bukti">Bukti Foto:</label>
+  <input type="file" id="bukti" required>
+
+  <label for="password">Password untuk Hapus:</label>
+  <input type="password" id="password" placeholder="Masukkan password untuk hapus" />
+
+  <button type="submit">Tambah Data</button>
+</form>
+
+<table id="tablePeminjaman">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>Status</th>
+      <th>NISN / NIP</th>
+      <th>Nama</th>
+      <th>Kelas</th>
+      <th>Alat yang Dipinjam</th>
+      <th>Tanggal</th>
+      <th>Bukti Foto</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Data akan ditambahkan di sini -->
+  </tbody>
+</table>
+
+<button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+<button onclick="downloadExcel()">Download Excel</button>
+
+<script>
+  const form = document.getElementById('formPeminjaman');
+  const table = document.getElementById('tablePeminjaman').getElementsByTagName('tbody')[0];
+  let riwayatData = [];
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const status = document.getElementById('status').value;
+    const idNumber = document.getElementById('idNumber').value;
+    const nama = document.getElementById('nama').value;
+    const kelas = document.getElementById('kelas').value;
+    const alat = document.getElementById('alat').value;
+    const tanggal = document.getElementById('tanggal').value;
+    const buktiFile = document.getElementById('bukti').files[0];
+    const password = document.getElementById('password').value;
+
+    if (!buktiFile) {
+      alert('Harap unggah bukti foto!');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td>${table.rows.length + 1}</td>
+        <td>${status}</td>
+        <td>${idNumber}</td>
+        <td>${nama}</td>
+        <td>${kelas}</td>
+        <td>${alat}</td>
+        <td>${tanggal}</td>
+        <td><img src="${e.target.result}" alt="Bukti Foto" class="thumbnail" onclick="openModal('${e.target.result}')"></td>
+        <td><button onclick="deleteRow(this, '${password}')">Hapus</button></td>
+      `;
+      table.appendChild(newRow);
+      riwayatData.push({
+        status,
+        idNumber,
+        nama,
+        kelas,
+        alat,
+        tanggal,
+        bukti: e.target.result
+      });
+
+      form.reset();
+    };
+    reader.readAsDataURL(buktiFile);
+  });
+
+  function deleteRow(button, enteredPassword) {
+    const correctPassword = "admin123"; // Ganti dengan password yang valid
+    if (enteredPassword === correctPassword) {
+      const row = button.closest('tr');
+      const rowIndex = row.rowIndex - 1;
+      riwayatData.splice(rowIndex, 1);
+      row.remove();
+    } else {
+      alert("Password salah. Anda tidak memiliki hak untuk menghapus.");
+    }
+  }
+
+  function openModal(src) {
+    const modal = document.getElementById('myModal');
+    const modalImg = document.getElementById('imgModal');
+    modal.style.display = 'block';
+    modalImg.src = src;
+  }
+
+  function closeModal() {
+    document.getElementById('myModal').style.display = 'none';
+  }
+
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+  }
+
+  // Fungsi untuk mengunduh data tabel sebagai file Excel
+  function downloadExcel() {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.table_to_sheet(table);
+    XLSX.utils.book_append_sheet(wb, ws, "Peminjaman Alat");
+    XLSX.writeFile(wb, "Data_Peminjaman_Alat.xlsx");
+  }
+</script>
+
+</body>
+</html>
